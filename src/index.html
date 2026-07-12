@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SULEMAN OS | Backend Java Developer</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Icons & Bootstrap -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <style>
+        /* ========== VARIABLES & GLOBAL ========== */
+        :root {
+            --bg-color: #05070D;
+            --card-bg: #101826;
+            --primary: #00C8FF;
+            --glow: #4CC9F0;
+            --secondary-text: #9CA3AF;
+            --white: #FFFFFF;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --glass-bg: rgba(16, 24, 38, 0.6);
+            --glass-border: rgba(0, 200, 255, 0.15);
+            --glass-blur: 15px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+        body { background-color: var(--bg-color); color: var(--white); font-family: var(--font-display); overflow-x: hidden; }
+        ::selection { background: var(--primary); color: var(--bg-color); }
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--glass-border); border-radius: 1.5rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 12px 48px rgba(0, 200, 255, 0.2); }
+        .section-title { font-size: 3rem; font-weight: 700; margin-bottom: 3rem; letter-spacing: -0.02em; }
+        .highlight { color: var(--primary); text-shadow: 0 0 20px rgba(0, 200, 255, 0.3); }
+        .btn-primary-glow { background: var(--primary); color: var(--bg-color); border: none; padding: 0.8rem 2rem; border-radius: 50px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(0, 200, 255, 0.3); }
+        .btn-primary-glow:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(0, 200, 255, 0.6); background: #00b8e6; }
+        .btn-outline-glow { background: transparent; color: var(--white); border: 1px solid var(--primary); padding: 0.8rem 2rem; border-radius: 50px; font-weight: 600; transition: all 0.3s ease; }
+        .btn-outline-glow:hover { background: rgba(0, 200, 255, 0.1); box-shadow: 0 0 20px rgba(0, 200, 255, 0.2); transform: scale(1.05); color: var(--primary); }
+        .container { max-width: 1280px; padding: 0 2rem; }
+
+        /* ========== LOADER ========== */
+        #loader-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #05070D; display: flex; justify-content: center; align-items: center; z-index: 99999; font-family: var(--font-mono); }
+        .loader-content { text-align: center; max-width: 600px; width: 90%; }
+        .os-title { font-size: 4rem; font-weight: 700; color: var(--primary); text-shadow: 0 0 40px rgba(0, 200, 255, 0.3); letter-spacing: 0.1em; margin-bottom: 0.2rem; }
+        .os-version { font-size: 1rem; color: var(--secondary-text); margin-bottom: 2rem; }
+        .init-log { text-align: left; margin: 2rem auto; max-width: 400px; font-size: 0.9rem; color: var(--secondary-text); line-height: 1.8; }
+        .log-line { opacity: 0; transform: translateY(10px); transition: all 0.3s ease; }
+        .log-line.visible { opacity: 1; transform: translateY(0); }
+        .log-line.success { color: var(--primary); font-weight: 700; }
+        .progress-wrapper { position: relative; width: 100%; height: 4px; background: #1a1f2e; border-radius: 4px; margin-top: 2rem; overflow: hidden; }
+        .progress-bar-custom { height: 100%; width: 0%; background: var(--primary); box-shadow: 0 0 20px var(--primary); transition: width 0.1s linear; border-radius: 4px; }
+        .progress-text { margin-top: 1rem; font-size: 0.8rem; color: var(--secondary-text); letter-spacing: 0.05em; }
+        #scene-mountain, #scene-energy, #scene-snap, #scene-logo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99998; background: #05070D; display: none; justify-content: center; align-items: center; }
+        .mountain-bg { position: absolute; width: 100%; height: 100%; background: url('assets/images/mountain.jpg') center/cover no-repeat; filter: brightness(0.6); transform: scale(1.05); }
+        #wind-particles, #energy-canvas, #snap-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .glow-ring { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 200, 255, 0.6) 0%, transparent 70%); animation: pulse-glow 1s infinite alternate; }
+        @keyframes pulse-glow { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 1; } }
+        .flash-overlay { position: absolute; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; }
+        .logo-container { text-align: center; }
+        .ss-logo { font-size: 8rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 60px rgba(0, 200, 255, 0.5); margin-bottom: 1rem; letter-spacing: -0.05em; }
+        .name-title { margin-top: 1rem; }
+        .name-text { font-size: 3.5rem; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+        #typed-output { font-family: var(--font-mono); font-size: 1.2rem; color: var(--secondary-text); min-height: 2rem; }
+        #main-website { display: none; background: var(--bg-color); }
+
+        /* ========== NAVBAR ========== */
+        .navbar-glass { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background: rgba(5, 7, 13, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 200, 255, 0.1); padding: 0.8rem 0; }
+        .nav-container { max-width: 1280px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav-logo .logo-icon { font-size: 2rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px rgba(0, 200, 255, 0.2); cursor: pointer; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; margin: 0; padding: 0; }
+        .nav-links .nav-item { color: var(--secondary-text); text-decoration: none; font-size: 0.95rem; font-weight: 500; position: relative; transition: color 0.3s ease; padding: 0.2rem 0; }
+        .nav-links .nav-item::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: var(--primary); transition: width 0.3s ease; box-shadow: 0 0 10px var(--primary); }
+        .nav-links .nav-item:hover, .nav-links .nav-item.active { color: var(--white); }
+        .nav-links .nav-item:hover::after, .nav-links .nav-item.active::after { width: 100%; }
+        .nav-actions { display: flex; align-items: center; gap: 1rem; }
+        .btn-recruiter { background: transparent; color: var(--secondary-text); border: 1px solid var(--secondary-text); padding: 0.4rem 1.2rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; }
+        .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 5px; }
+        .hamburger span { display: block; width: 25px; height: 2px; background: var(--white); transition: all 0.3s ease; }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+        @media (max-width: 991px) { .nav-links { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: rgba(5, 7, 13, 0.95); backdrop-filter: blur(12px); flex-direction: column; padding: 2rem; gap: 1.5rem; border-bottom: 1px solid rgba(0, 200, 255, 0.1); } .nav-links.open { display: flex; } .hamburger { display: flex; } }
+
+        /* ========== HERO ========== */
+        .hero-section { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 6rem 2rem 4rem; }
+        .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('assets/images/mountain.jpg') center/cover no-repeat; filter: brightness(0.4) contrast(1.2); z-index: 0; will-change: transform; }
+        .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(5, 7, 13, 0.3) 0%, rgba(5, 7, 13, 0.8) 100%); z-index: 1; }
+        #hero-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .hero-content { position: relative; z-index: 2; text-align: center; max-width: 900px; }
+        .hero-name { font-size: 7rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.5rem; text-shadow: 0 0 40px rgba(0, 200, 255, 0.1); }
+        .hero-typed { font-family: var(--font-mono); font-size: 1.5rem; color: var(--secondary-text); margin-bottom: 2.5rem; min-height: 3rem; }
+        .hero-buttons { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+        .scroll-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); width: 30px; height: 50px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 30px; display: flex; justify-content: center; padding-top: 5px; }
+        .scroll-indicator span { display: block; width: 3px; height: 10px; background: var(--primary); border-radius: 3px; animation: scroll-down 2s infinite; }
+        @keyframes scroll-down { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+        @media (max-width: 768px) { .hero-name { font-size: 4rem; } .hero-typed { font-size: 1.2rem; } }
+
+        /* ========== ABOUT ========== */
+        .about-section { padding: 6rem 0; }
+        .about-wrapper { padding: 3rem; display: flex; align-items: center; }
+        .about-image-wrapper { width: 100%; aspect-ratio: 1/1; border-radius: 1.5rem; overflow: hidden; border: 2px solid rgba(0, 200, 255, 0.2); box-shadow: 0 0 30px rgba(0, 200, 255, 0.1); }
+        .about-img { width: 100%; height: 100%; object-fit: cover; }
+        .about-desc { color: var(--secondary-text); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem; }
+        .about-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--primary); text-shadow: 0 0 20px rgba(0, 200, 255, 0.2); }
+        .stat-label { font-size: 0.85rem; color: var(--secondary-text); margin-top: 0.3rem; }
+        @media (max-width: 768px) { .about-wrapper { padding: 1.5rem; } .about-stats { grid-template-columns: 1fr 1fr; } }
+
+        /* ========== SKILLS ========== */
+        .skills-section { padding: 6rem 0; position: relative; }
+        .skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; max-width: 1000px; margin: 0 auto; }
+        .hex-card { background: var(--card-bg); border: 1px solid rgba(0, 200, 255, 0.1); border-radius: 1.5rem; padding: 2rem 1rem; text-align: center; position: relative; transition: all 0.3s ease; cursor: default; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; }
+        .hex-card i { font-size: 2.5rem; color: var(--primary); margin-bottom: 0.5rem; transition: all 0.3s ease; }
+        .hex-card span { font-size: 0.9rem; font-weight: 500; color: var(--white); }
+        .hex-card:hover { transform: translateY(-5px) rotateX(5deg) rotateY(5deg); box-shadow: 0 0 40px rgba(0, 200, 255, 0.2); border-color: var(--primary); }
+        .hex-card:hover i { transform: scale(1.2); text-shadow: 0 0 20px rgba(0, 200, 255, 0.6); }
+        @media (max-width: 991px) { .skills-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 576px) { .skills-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        /* ========== PROJECTS ========== */
+        .projects-section { padding: 6rem 0; }
+        .projects-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+        .project-card { padding: 1.5rem; transition: all 0.4s ease; overflow: hidden; }
+        .project-card:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 16px 64px rgba(0, 200, 255, 0.15); }
+        .project-img { width: 100%; aspect-ratio: 16/9; border-radius: 1rem; overflow: hidden; margin-bottom: 1.2rem; }
+        .project-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .project-card:hover .project-img img { transform: scale(1.05); }
+        .project-info h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .project-info p { color: var(--secondary-text); font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.6; }
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.2rem; }
+        .tech-tags span { background: rgba(0, 200, 255, 0.1); padding: 0.3rem 0.8rem; border-radius: 50px; font-size: 0.75rem; color: var(--primary); border: 1px solid rgba(0, 200, 255, 0.1); }
+        .project-actions { display: flex; gap: 1rem; }
+        @media (max-width: 768px) { .projects-grid { grid-template-columns: 1fr; } }
+
+        /* ========== EXPERIENCE ========== */
+        .experience-section { padding: 6rem 0; }
+        .timeline { position: relative; max-width: 800px; margin: 0 auto; padding-left: 2rem; }
+        .timeline::before { content: ''; position: absolute; left: 7px; top: 0; width: 2px; height: 100%; background: var(--primary); box-shadow: 0 0 15px var(--primary); }
+        .timeline-item { position: relative; margin-bottom: 3rem; padding-left: 2rem; }
+        .timeline-marker { position: absolute; left: -8px; top: 1.5rem; width: 16px; height: 16px; background: var(--bg-color); border: 2px solid var(--primary); border-radius: 50%; box-shadow: 0 0 20px rgba(0, 200, 255, 0.3); }
+        .timeline-content { padding: 1.5rem; }
+        .timeline-content h4 { font-size: 1.3rem; font-weight: 600; }
+        .timeline-content .company { color: var(--primary); display: block; margin: 0.3rem 0; }
+        .timeline-content .date { color: var(--secondary-text); font-size: 0.9rem; margin-bottom: 0.5rem; }
+
+        /* ========== EDUCATION ========== */
+        .education-section { padding: 6rem 0; }
+        .edu-card { padding: 1.5rem; text-align: center; margin-bottom: 2rem; }
+        .edu-card h4 { font-size: 1.2rem; font-weight: 600; }
+        .edu-card p { color: var(--secondary-text); margin: 0.3rem 0; }
+        .edu-card .cgpa { color: var(--primary); font-weight: 700; }
+        .edu-card .year { font-size: 0.9rem; }
+
+        /* ========== CONTACT ========== */
+        .contact-section { padding: 6rem 0; }
+        .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+        .contact-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-decoration: none; color: var(--white); transition: all 0.3s ease; min-height: 120px; }
+        .contact-card i { font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem; transition: all 0.3s ease; }
+        .contact-card span { font-size: 0.95rem; color: var(--secondary-text); }
+        .contact-card:hover { transform: translateY(-4px); text-decoration: none; color: var(--white); box-shadow: 0 8px 32px rgba(0, 200, 255, 0.15); border-color: var(--primary); }
+        .contact-card:hover i { transform: scale(1.2); text-shadow: 0 0 20px rgba(0, 200, 255, 0.4); }
+        @media (max-width: 768px) { .contact-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 576px) { .contact-grid { grid-template-columns: 1fr 1fr; } }
+
+        /* ========== FOOTER ========== */
+        .footer { position: relative; padding: 3rem 0 2rem; background: rgba(16, 24, 38, 0.5); border-top: 1px solid rgba(0, 200, 255, 0.05); overflow: hidden; }
+        .footer-stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(2px 2px at 20px 30px, #eee, transparent), radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 90px 40px, #fff, transparent); background-size: 200px 200px; opacity: 0.3; animation: twinkle 4s infinite alternate; }
+        @keyframes twinkle { 0% { opacity: 0.2; } 100% { opacity: 0.6; } }
+        .social-icons { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; position: relative; z-index: 1; }
+        .social-icons a { color: var(--secondary-text); font-size: 1.5rem; transition: all 0.3s ease; }
+        .social-icons a:hover { color: var(--primary); transform: translateY(-3px); text-shadow: 0 0 20px rgba(0, 200, 255, 0.3); }
+        .footer-text { color: var(--secondary-text); font-size: 0.9rem; position: relative; z-index: 1; }
+        .footer-text strong { color: var(--white); }
+
+        /* ========== TERMINAL ========== */
+        #terminal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; }
+        .terminal-window { width: 90%; max-width: 800px; height: 70vh; max-height: 600px; display: flex; flex-direction: column; padding: 0; overflow: hidden; background: rgba(5, 7, 13, 0.95); }
+        .terminal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(0, 200, 255, 0.1); background: rgba(0, 0, 0, 0.3); }
+        .terminal-header span { font-family: var(--font-mono); font-size: 0.9rem; color: var(--secondary-text); }
+        #terminal-close { background: none; border: none; color: var(--secondary-text); font-size: 1.2rem; cursor: pointer; transition: color 0.3s ease; }
+        #terminal-close:hover { color: var(--white); }
+        .terminal-body { flex: 1; padding: 1rem 1.5rem; overflow-y: auto; font-family: var(--font-mono); font-size: 0.9rem; color: var(--white); line-height: 1.6; }
+        .terminal-body .line { margin-bottom: 0.3rem; word-break: break-word; }
+        .terminal-body .line.user { color: var(--primary); }
+        .terminal-body .line.error { color: #ff4757; }
+        .terminal-body .line.output { color: #a4b0be; }
+        .terminal-body .cmd { color: var(--primary); font-weight: 700; }
+        .terminal-input { display: flex; align-items: center; padding: 0.8rem 1.5rem; border-top: 1px solid rgba(0, 200, 255, 0.1); background: rgba(0, 0, 0, 0.3); }
+        .terminal-input .prompt { font-family: var(--font-mono); color: var(--primary); margin-right: 0.8rem; font-size: 0.9rem; }
+        #terminal-input { flex: 1; background: transparent; border: none; color: var(--white); font-family: var(--font-mono); font-size: 0.9rem; outline: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 991px) { .about-wrapper { flex-direction: column; } .about-image-col { margin-bottom: 2rem; text-align: center; } .about-image-wrapper { max-width: 300px; margin: 0 auto; } .skills-grid { grid-template-columns: repeat(3, 1fr) !important; } .projects-grid { grid-template-columns: 1fr !important; } .contact-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (max-width: 576px) { .hero-name { font-size: 3rem; } .hero-typed { font-size: 1rem; } .section-title { font-size: 2.2rem; } .skills-grid { grid-template-columns: repeat(2, 1fr) !important; } .contact-grid { grid-template-columns: repeat(2, 1fr) !important; } .nav-container { padding: 0 1rem; } .btn-recruiter { display: none; } .about-stats { grid-template-columns: 1fr 1fr !important; } }
+        @media (min-width: 992px) { .skills-grid { grid-template-columns: repeat(4, 1fr); } .projects-grid { grid-template-columns: repeat(2, 1fr); } .contact-grid { grid-template-columns: repeat(3, 1fr); } }
+    </style>
+</head>
+<body>
+
+<!-- ======================== -->
+<!-- HTML STRUCTURE           -->
+<!-- ======================== -->
+<div id="loader-container">
+    <div class="loader-content">
+        <div class="os-title">SULEMAN OS</div>
+        <div class="os-version">Version 1.0</div>
+        <div class="init-log">
+            <div class="log-line">Initializing...</div>
+            <div class="log-line">Loading Java Runtime...</div>
+            <div class="log-line">Loading Spring Boot...</div>
+            <div class="log-line">Loading Projects...</div>
+            <div class="log-line">Loading Developer Profile...</div>
+            <div class="log-line">Loading Resume...</div>
+            <div class="log-line">Loading Portfolio...</div>
+            <div class="log-line success">Access Granted.</div>
+        </div>
+        <div class="progress-wrapper">
+            <div class="progress-bar-custom" id="progress-bar"></div>
+            <div class="progress-text" id="progress-text">0%</div>
+        </div>
+    </div>
+</div>
+
+<!-- SCENE 2: MOUNTAIN -->
+<div id="scene-mountain" style="display:none;">
+    <div class="mountain-bg"></div>
+    <canvas id="wind-particles"></canvas>
+</div>
+
+<!-- SCENE 3: ENERGY -->
+<div id="scene-energy" style="display:none;">
+    <canvas id="energy-canvas"></canvas>
+    <div class="glow-ring"></div>
+</div>
+
+<!-- SCENE 4: SNAP -->
+<div id="scene-snap" style="display:none;">
+    <canvas id="snap-canvas"></canvas>
+    <div class="flash-overlay"></div>
+</div>
+
+<!-- SCENE 5: LOGO -->
+<div id="scene-logo" style="display:none;">
+    <div class="logo-container">
+        <div class="ss-logo">SS</div>
+        <div class="name-title">
+            <h1 class="name-text">SHAIK SULEMAN</h1>
+            <div class="typed-wrapper">
+                    <span id="typed-strings" style="display:none;">
+                        Backend Java Developer
+                        Spring Boot Developer
+                        REST API Developer
+                        Problem Solver
+                        Software Engineer
+                    </span>
+                <span id="typed-output"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="main-website" style="display:none;">
+    <nav id="navbar" class="navbar-glass">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">SS</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-item active">Home</a></li>
+                <li><a href="#about" class="nav-item">About</a></li>
+                <li><a href="#skills" class="nav-item">Skills</a></li>
+                <li><a href="#projects" class="nav-item">Projects</a></li>
+                <li><a href="#experience" class="nav-item">Experience</a></li>
+                <li><a href="#education" class="nav-item">Education</a></li>
+                <li><a href="#contact" class="nav-item">Contact</a></li>
+                <li><a href="assets/resume/resume.pdf" target="_blank" class="nav-item">Resume</a></li>
+                <li><a href="https://github.com" target="_blank" class="nav-item"><i class="fab fa-github"></i></a></li>
+            </ul>
+            <div class="nav-actions">
+                <button id="recruiter-toggle" class="btn-recruiter">Recruiter Mode</button>
+                <div class="hamburger" id="hamburger">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-name">SHAIK<br>SULEMAN</h1>
+                <div class="hero-typed">
+                    <span id="hero-typed"></span>
+                </div>
+                <div class="hero-buttons">
+                    <a href="#about" class="btn btn-primary-glow">Explore</a>
+                    <a href="assets/resume/resume.pdf" target="_blank" class="btn btn-outline-glow">Resume</a>
+                    <a href="https://github.com" target="_blank" class="btn btn-outline-glow"><i class="fab fa-github"></i> GitHub</a>
+                </div>
+            </div>
+            <div class="scroll-indicator">
+                <span></span>
+            </div>
+        </div>
+        <canvas id="hero-particles"></canvas>
+    </section>
+
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="row glass-card about-wrapper">
+                <div class="col-lg-5 about-image-col">
+                    <div class="about-image-wrapper">
+                        <img src="assets/images/avatar.jpg" alt="Shaik Suleman" class="about-img" loading="lazy" />
+                    </div>
+                </div>
+                <div class="col-lg-7 about-text-col">
+                    <h2 class="section-title">About <span class="highlight">Me</span></h2>
+                    <p class="about-desc">I am a passionate Backend Java Developer with a deep love for clean architecture, microservices, and building robust REST APIs.</p>
+                    <div class="about-stats">
+                        <div class="stat-item"><div class="stat-number" data-target="12">0</div><div class="stat-label">Projects Completed</div></div>
+                        <div class="stat-item"><div class="stat-number" data-target="3">0</div><div class="stat-label">Internships</div></div>
+                        <div class="stat-item"><div class="stat-number" data-target="15">0</div><div class="stat-label">Technologies</div></div>
+                        <div class="stat-item"><div class="stat-number" data-target="250">0</div><div class="stat-label">LeetCode Problems</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="skills" class="skills-section">
+        <div class="container">
+            <h2 class="section-title text-center">Tech <span class="highlight">Stack</span></h2>
+            <div class="skills-grid">
+                <div class="hex-card"><i class="fab fa-java"></i><span>Java</span></div>
+                <div class="hex-card"><i class="fas fa-leaf"></i><span>Spring Boot</span></div>
+                <div class="hex-card"><i class="fas fa-database"></i><span>MySQL</span></div>
+                <div class="hex-card"><i class="fab fa-git-alt"></i><span>Git</span></div>
+                <div class="hex-card"><i class="fab fa-github"></i><span>GitHub</span></div>
+                <div class="hex-card"><i class="fab fa-html5"></i><span>HTML</span></div>
+                <div class="hex-card"><i class="fab fa-css3-alt"></i><span>CSS</span></div>
+                <div class="hex-card"><i class="fab fa-js"></i><span>JavaScript</span></div>
+                <div class="hex-card"><i class="fab fa-bootstrap"></i><span>Bootstrap</span></div>
+                <div class="hex-card"><i class="fas fa-code"></i><span>REST APIs</span></div>
+                <div class="hex-card"><i class="fas fa-plug"></i><span>JDBC</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects" class="projects-section">
+        <div class="container">
+            <h2 class="section-title text-center">Featured <span class="highlight">Projects</span></h2>
+            <div class="projects-grid">
+                <div class="project-card glass-card">
+                    <div class="project-img"><img src="assets/images/project1.jpg" alt="E-Commerce" loading="lazy" /></div>
+                    <div class="project-info"><h3>E-Commerce Platform</h3><p>Full-stack e-commerce with Spring Boot,HTML,CSS & JavaScript</p><div class="tech-tags"><span>Java</span><span>Spring Boot</span><span>MySQL</span></div><div class="project-actions"><a href="https://github.com/suleman3222/e-commerce" class="btn btn-sm btn-primary-glow">GitHub</a><a href="#" class="btn btn-sm btn-outline-glow">Live Demo</a></div></div>
+                </div>
+                <div class="project-card glass-card">
+                    <div class="project-img"><img src="assets/images/project2.jpg" alt="Banking" loading="lazy" /></div>
+                    <div class="project-info"><h3>Library Management System</h3><p>Secure Library app using Spring Boot.</p><div class="tech-tags"><span>Java</span><span>Spring Boot</span><span>JDBC</span></div><div class="project-actions"><a href="https://github.com/suleman3222/lib" class="btn btn-sm btn-primary-glow">GitHub</a><a href="#" class="btn btn-sm btn-outline-glow">Live Demo</a></div></div>
+                </div>
+                <div class="project-card glass-card">
+                    <div class="project-img"><img src="assets/images/project3.jpg" alt="Chat App" loading="lazy" /></div>
+                    <div class="project-info"><h3>Multi-Client Chat Application</h3><p>Real-time chat system using WebSockets and Java concurrency.</p><div class="tech-tags"><span>Java</span><span>WebSockets</span><span>Socket.io</span></div><div class="project-actions"><a href="https://github.com/suleman3222/chat" class="btn btn-sm btn-primary-glow">GitHub</a><a href="#" class="btn btn-sm btn-outline-glow">Live Demo</a></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="experience" class="experience-section">
+        <div class="container">
+            <h2 class="section-title text-center">Professional <span class="highlight">Journey</span></h2>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content glass-card"><h4>Java Developer Intern</h4><span class="company">Tech Corp</span><p class="date">02/2025 to 03/2025</p><p>Designed microservices architecture, improved API response time by 40%.</p></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="education" class="education-section">
+        <div class="container">
+            <h2 class="section-title text-center">Education & <span class="highlight">Certificates</span></h2>
+            <div class="row">
+                <div class="col-md-6"><div class="edu-card glass-card"><h4>B Tech Artificial Intelligence and Machine Learning</h4><p>Sri Venkateswara College of Engineering and Technology</p><p class="cgpa">CGPA: 7.6</p><p class="year">2023 - 2026</p></div></div>
+                <div class="col-md-6"><div class="edu-card glass-card"><h4>Diploma Electrical Electronics Engineering</h4><p>Brindavan Institute of Technology and Science</p><p class="cgpa">CGPA: 70.03%</p><p class="year">2019 - 2022</p></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title text-center">Control <span class="highlight">Panel</span></h2>
+            <div class="contact-grid">
+                <a href="mailto:suleman@example.com" class="contact-card glass-card"><i class="fas fa-envelope"></i><span>Email</span></a>
+                <a href="tel:+1234567890" class="contact-card glass-card"><i class="fas fa-phone"></i><span>Phone</span></a>
+                <a href="https://github.com" target="_blank" class="contact-card glass-card"><i class="fab fa-github"></i><span>GitHub</span></a>
+                <a href="https://linkedin.com" target="_blank" class="contact-card glass-card"><i class="fab fa-linkedin"></i><span>LinkedIn</span></a>
+                <a href="https://leetcode.com" target="_blank" class="contact-card glass-card"><i class="fas fa-code"></i><span>LeetCode</span></a>
+                <a href="assets/resume/resume.pdf" target="_blank" class="contact-card glass-card"><i class="fas fa-file-pdf"></i><span>Resume</span></a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-stars"></div>
+        <div class="container text-center">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p class="footer-text">Built from scratch by <strong>Shaik Suleman</strong><br />Powered by Java ☕</p>
+        </div>
+    </footer>
+
+    <div id="ai-assistant" class="ai-bubble">
+        <div class="ai-toggle" id="ai-toggle"><i class="fas fa-robot"></i></div>
+        <div class="ai-window glass-card" id="ai-window">
+            <div class="ai-header">Ask Suleman AI</div>
+            <div class="ai-messages" id="ai-messages"><div class="msg bot">Hello! I am Suleman's AI. Ask me anything.</div></div>
+            <div class="ai-input"><input type="text" id="ai-input" placeholder="Type a question..." /><button id="ai-send"><i class="fas fa-paper-plane"></i></button></div>
+        </div>
+    </div>
+
+    <button id="recruiter-floating" class="btn-recruiter-float glass-card"><i class="fas fa-briefcase"></i> Recruiter Mode</button>
+
+    <div id="terminal-overlay">
+        <div class="terminal-window glass-card">
+            <div class="terminal-header"><span>Developer Terminal</span><button id="terminal-close"><i class="fas fa-times"></i></button></div>
+            <div class="terminal-body" id="terminal-body"><div class="line">Welcome to SULEMAN OS Terminal</div><div class="line">Type <span class="cmd">help</span> for commands.</div></div>
+            <div class="terminal-input"><span class="prompt">$></span><input type="text" id="terminal-input" placeholder="Type command..." autocomplete="off" /></div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== -->
+<!-- EXTERNAL LIBS            -->
+<!-- ======================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.1.0/typed.umd.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ======================== -->
+<!-- CRASH-PROOF AUDIO TAGS   -->
+<!-- ======================== -->
+<audio id="audio-wind" src="assets/sounds/wind.mp3" preload="auto"></audio>
+<audio id="audio-energy" src="assets/sounds/energy.mp3" preload="auto"></audio>
+<audio id="audio-snap" src="assets/sounds/snap.mp3" preload="auto"></audio>
+<audio id="audio-boot" src="assets/sounds/boot.mp3" preload="auto"></audio>
+<audio id="audio-click" src="assets/sounds/click.mp3" preload="auto"></audio>
+
+<!-- ======================== -->
+<!-- SINGLE MERGED JS SCRIPT  -->
+<!-- ======================== -->
+<script type="module">
+    // --- LENIS ---
+    const lenis = new Lenis({ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), direction: 'vertical', gestureDirection: 'vertical', smooth: true, mouseMultiplier: 1, smoothTouch: false, touchMultiplier: 2 });
+    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+
+    // ==========================================
+    // CRASH-PROOF SOUND ENGINE
+    // ==========================================
+    function safePlay(id, volume = 0.4) {
+        try {
+            const audio = document.getElementById(id);
+            if (audio) {
+                audio.currentTime = 0;
+                audio.volume = volume;
+                audio.play().catch(() => {});
+            }
+        } catch (error) {
+            // Do absolutely nothing if it fails. Website will NOT crash.
+        }
+    }
+
+    // Unlock browser audio on first user click
+    document.addEventListener('click', () => {
+        try {
+            const unlockSound = new Audio();
+            unlockSound.volume = 0;
+            unlockSound.play().catch(() => {});
+        } catch(e) {}
+    }, { once: true });
+
+    // --- FUNCTIONS ---
+
+    // 1. LOADER
+    function initLoader() {
+        const hasVisited = localStorage.getItem('suleman_os_visited');
+        const loader = document.getElementById('loader-container');
+        const mountainScene = document.getElementById('scene-mountain');
+        const energyScene = document.getElementById('scene-energy');
+        const snapScene = document.getElementById('scene-snap');
+        const logoScene = document.getElementById('scene-logo');
+        const mainSite = document.getElementById('main-website');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const logLines = document.querySelectorAll('.log-line');
+
+        if (hasVisited) {
+            loader.style.display = 'none';
+            mountainScene.style.display = 'none';
+            energyScene.style.display = 'none';
+            snapScene.style.display = 'none';
+            logoScene.style.display = 'none';
+            mainSite.style.display = 'block';
+            return;
+        }
+
+        let progress = 0;
+        const duration = 4000;
+        const interval = 30;
+        const bootTimer = setInterval(() => {
+            progress += (interval / duration) * 100;
+            if (progress >= 100) { progress = 100; clearInterval(bootTimer); }
+            progressBar.style.width = progress + '%';
+            progressText.textContent = Math.round(progress) + '%';
+            const logIndex = Math.floor((progress / 100) * (logLines.length - 1));
+            logLines.forEach((line, idx) => { if (idx <= logIndex) line.classList.add('visible'); });
+        }, interval);
+
+        setTimeout(() => {
+            clearInterval(bootTimer);
+            progressBar.style.width = '100%';
+            progressText.textContent = '100%';
+            logLines.forEach(line => line.classList.add('visible'));
+            gsap.to(loader, { opacity: 0, duration: 0.8, onComplete: () => { loader.style.display = 'none'; startScene2(); } });
+        }, duration);
+
+        function startScene2() {
+            safePlay('audio-wind', 0.3); // <--- ADDED WIND
+            mountainScene.style.display = 'flex';
+            gsap.to('.mountain-bg', { scale: 1.1, duration: 4, ease: 'power2.inOut' });
+            gsap.fromTo(mountainScene, { opacity: 0 }, { opacity: 1, duration: 1 });
+            setTimeout(() => { gsap.to(mountainScene, { opacity: 0, duration: 0.8, onComplete: () => { mountainScene.style.display = 'none'; startScene3(); } }); }, 4000);
+        }
+
+        function startScene3() {
+            safePlay('audio-energy', 0.4); // <--- ADDED ENERGY
+            energyScene.style.display = 'flex';
+            gsap.fromTo(energyScene, { opacity: 0 }, { opacity: 1, duration: 0.5 });
+            const ring = energyScene.querySelector('.glow-ring');
+            gsap.to(ring, { scale: 2, opacity: 0, duration: 2, repeat: 0, ease: 'power2.out' });
+            setTimeout(() => { gsap.to(energyScene, { opacity: 0, duration: 0.5, onComplete: () => { energyScene.style.display = 'none'; startScene4(); } }); }, 2000);
+        }
+
+        function startScene4() {
+            safePlay('audio-snap', 0.6); // <--- ADDED SNAP
+            snapScene.style.display = 'flex';
+            gsap.fromTo(snapScene, { opacity: 0 }, { opacity: 1, duration: 0.1 });
+            const flash = snapScene.querySelector('.flash-overlay');
+            gsap.to(flash, { opacity: 1, duration: 0.05, onComplete: () => { gsap.to(flash, { opacity: 0, duration: 0.2, delay: 0.05 }); } });
+            gsap.to(snapScene, { scale: 1.05, duration: 0.1, onComplete: () => { gsap.to(snapScene, { scale: 1, duration: 0.2 }); } });
+            setTimeout(() => { gsap.to(snapScene, { opacity: 0, duration: 0.5, onComplete: () => { snapScene.style.display = 'none'; startScene5(); } }); }, 1000);
+        }
+
+        function startScene5() {
+            safePlay('audio-boot', 0.4); // <--- ADDED BOOT
+            logoScene.style.display = 'flex';
+            gsap.fromTo(logoScene, { opacity: 0 }, { opacity: 1, duration: 0.5 });
+            const ssLogo = logoScene.querySelector('.ss-logo');
+            gsap.from(ssLogo, { scale: 0, rotation: 180, duration: 1, ease: 'back.out(1.7)' });
+            const nameText = logoScene.querySelector('.name-text');
+            gsap.from(nameText, { opacity: 0, y: 20, duration: 0.5, delay: 0.5 });
+            setTimeout(() => { initTypedLogo(); }, 1000);
+            setTimeout(() => { gsap.to(logoScene, { opacity: 0, duration: 0.8, onComplete: () => { logoScene.style.display = 'none'; mainSite.style.display = 'block'; localStorage.setItem('suleman_os_visited', 'true'); document.dispatchEvent(new Event('siteRevealed')); } }); }, 6000);
+        }
+    }
+
+    // 2. NAVBAR
+    function initNavbar() {
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        const navItems = document.querySelectorAll('.nav-item');
+        hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); navLinks.classList.toggle('open'); });
+        navItems.forEach(item => { item.addEventListener('click', () => { hamburger.classList.remove('active'); navLinks.classList.remove('open'); }); });
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => { const sectionTop = section.offsetTop - 100; if (scrollY >= sectionTop) current = section.getAttribute('id'); });
+            navItems.forEach(item => { item.classList.remove('active'); if (item.getAttribute('href') === '#' + current) item.classList.add('active'); });
+        });
+    }
+
+    // 3. HERO
+    function initHero() {
+        const heroBg = document.querySelector('.hero-bg');
+        const heroContent = document.querySelector('.hero-content');
+        if (!heroBg || !heroContent) return;
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.clientX) / 50;
+            const y = (window.innerHeight / 2 - e.clientY) / 50;
+            heroBg.style.transform = `translate(${x * 0.5}px, ${y * 0.5}px) scale(1.05)`;
+            heroContent.style.transform = `translate(${x * -0.2}px, ${y * -0.2}px)`;
+        });
+        const replayBtn = document.createElement('button');
+        replayBtn.className = 'btn btn-outline-glow replay-intro';
+        replayBtn.textContent = 'Replay Intro';
+        replayBtn.style.position = 'fixed'; replayBtn.style.bottom = '100px'; replayBtn.style.right = '20px'; replayBtn.style.zIndex = '999'; replayBtn.style.padding = '0.5rem 1rem'; replayBtn.style.fontSize = '0.8rem';
+        document.body.appendChild(replayBtn);
+        replayBtn.addEventListener('click', () => { localStorage.removeItem('suleman_os_visited'); location.reload(); });
+        setTimeout(() => { replayBtn.style.display = 'block'; }, 10000);
+    }
+
+    // 4. TYPING
+    let heroTypedInstance = null, logoTypedInstance = null;
+    function initTyping() {
+        const heroElement = document.getElementById('hero-typed');
+        if (heroElement) { heroTypedInstance = new Typed(heroElement, { strings: ['Backend Java Developer','Spring Boot Specialist','REST API Architect','Problem Solver','Software Engineer'], typeSpeed: 60, backSpeed: 40, loop: true, backDelay: 2000, showCursor: true, cursorChar: '|' }); }
+    }
+    function initTypedLogo() {
+        const logoElement = document.getElementById('typed-output');
+        if (logoElement) { logoTypedInstance = new Typed(logoElement, { strings: ['Backend Java Developer','Spring Boot Developer','REST API Developer','Problem Solver','Software Engineer'], typeSpeed: 50, backSpeed: 30, loop: false, backDelay: 1500, showCursor: true, cursorChar: '▌' }); }
+    }
+
+    // 5. PARTICLES
+    function initParticles() {
+        const canvas = document.getElementById('hero-particles');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        const particles = [];
+        const count = 80;
+        window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+        class Particle { constructor() { this.x = Math.random() * width; this.y = Math.random() * height; this.size = Math.random() * 2 + 1; this.speedX = (Math.random() - 0.5) * 0.5; this.speedY = (Math.random() - 0.5) * 0.5; this.opacity = Math.random() * 0.5 + 0.2; } update() { this.x += this.speedX; this.y += this.speedY; if (this.x > width || this.x < 0) this.speedX *= -1; if (this.y > height || this.y < 0) this.speedY *= -1; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = `rgba(0, 200, 255, ${this.opacity})`; ctx.fill(); } }
+        for (let i = 0; i < count; i++) { particles.push(new Particle()); }
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            for (let i = 0; i < particles.length; i++) { for (let j = i + 1; j < particles.length; j++) { const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y; const dist = Math.sqrt(dx * dx + dy * dy); if (dist < 150) { ctx.beginPath(); ctx.strokeStyle = `rgba(0, 200, 255, ${0.1 - dist / 1500})`; ctx.lineWidth = 0.5; ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke(); } } }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    // 6. SCROLL
+    gsap.registerPlugin(ScrollTrigger);
+    function initScroll() {
+        lenis.on('scroll', ScrollTrigger.update);
+        const elements = document.querySelectorAll('.glass-card, .stat-item, .hex-card, .project-card, .timeline-item, .edu-card, .contact-card');
+        elements.forEach((el) => { gsap.fromTo(el, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', scrollTrigger: { trigger: el, start: 'top 85%', end: 'top 60%', toggleActions: 'play none none none' } }); });
+        const heroBg = document.querySelector('.hero-bg');
+        if (heroBg) { gsap.to(heroBg, { y: 100, ease: 'none', scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: true } }); }
+        window.addEventListener('resize', () => { ScrollTrigger.refresh(); });
+    }
+
+    // 7. ANIMATIONS
+    function initAnimations() {
+        const glow = document.createElement('div'); glow.className = 'mouse-glow'; document.body.appendChild(glow);
+        document.addEventListener('mousemove', (e) => { gsap.to(glow, { x: e.clientX - 150, y: e.clientY - 150, duration: 0.3, ease: 'power2.out' }); });
+        const counters = document.querySelectorAll('.stat-number');
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            gsap.fromTo(counter, { textContent: 0 }, { textContent: target, duration: 2, ease: 'power2.out', scrollTrigger: { trigger: counter, start: 'top 90%' }, onUpdate: () => { const current = Math.round(parseFloat(counter.textContent)); counter.textContent = current + '+'; } });
+        });
+        const hexCards = document.querySelectorAll('.hex-card');
+        hexCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => { const rect = card.getBoundingClientRect(); const x = (e.clientX - rect.left) / rect.width - 0.5; const y = (e.clientY - rect.top) / rect.height - 0.5; gsap.to(card, { rotateX: -y * 10, rotateY: x * 10, duration: 0.3, ease: 'power2.out' }); });
+            card.addEventListener('mouseleave', () => { gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.5, ease: 'power2.out' }); });
+        });
+        const recruiterBtn = document.getElementById('recruiter-floating');
+        let recruiterMode = false;
+        recruiterBtn.addEventListener('click', () => {
+            recruiterMode = !recruiterMode; document.body.classList.toggle('recruiter-mode', recruiterMode);
+            recruiterBtn.textContent = recruiterMode ? 'Recruiter Mode ON' : 'Recruiter Mode';
+            recruiterBtn.style.borderColor = recruiterMode ? 'var(--primary)' : 'var(--secondary-text)';
+            if (recruiterMode) { gsap.globalTimeline.pause(); document.querySelectorAll('.hex-card, .project-card').forEach(el => { el.style.transform = 'none'; }); document.getElementById('projects').scrollIntoView({ behavior: 'smooth' }); } else { gsap.globalTimeline.play(); }
+        });
+        const style = document.createElement('style');
+        style.textContent = `
+            .mouse-glow { position: fixed; pointer-events: none; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 200, 255, 0.08) 0%, transparent 70%); z-index: 999; transform: translate(-150px, -150px); }
+            .recruiter-mode .hero-typed, .recruiter-mode .scroll-indicator, .recruiter-mode .mouse-glow { display: none !important; }
+            .recruiter-mode .hero-name { font-size: 4rem; }
+            .recruiter-mode .btn-recruiter-float { border-color: var(--primary) !important; background: var(--primary); color: var(--bg-color); }
+        `;
+        document.head.appendChild(style);
+
+        // ADD UI HOVER SOUNDS
+        document.querySelectorAll('.btn, .hex-card, .nav-item, .contact-card').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                safePlay('audio-click', 0.15);
+            });
+        });
+    }
+
+    // 8. TERMINAL
+    function initTerminal() {
+        const overlay = document.getElementById('terminal-overlay');
+        const closeBtn = document.getElementById('terminal-close');
+        const input = document.getElementById('terminal-input');
+        const body = document.getElementById('terminal-body');
+        document.addEventListener('keydown', (e) => { if (e.ctrlKey && e.shiftKey && e.key === 'D') { e.preventDefault(); toggleTerminal(); } });
+        function toggleTerminal() { if (overlay.style.display === 'flex') { overlay.style.display = 'none'; } else { overlay.style.display = 'flex'; input.focus(); body.scrollTop = body.scrollHeight; } }
+        closeBtn.addEventListener('click', () => { overlay.style.display = 'none'; });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const cmd = input.value.trim().toLowerCase(); input.value = ''; processCommand(cmd); } });
+        function processCommand(cmd) {
+            addLine(`$> ${cmd}`, 'user');
+            switch(cmd) {
+                case 'help': addLine('Available commands: help, about, skills, projects, github, resume, leetcode, contact, clear, sudo hire suleman, coffee, jarvis', 'output'); break;
+                case 'about': addLine('Shaik Suleman - Backend Java Developer. Passionate about Spring Boot, REST APIs, and clean architecture.', 'output'); break;
+                case 'skills': addLine('Java, Spring Boot, MySQL, Git, GitHub, HTML, CSS, JavaScript, Bootstrap, REST APIs, JDBC', 'output'); break;
+                case 'projects': addLine('1. E-Commerce Platform (Spring Boot)\n2. Banking Management System (Java/JDBC)\n3. Multi-Client Chat Application (WebSockets)', 'output'); break;
+                case 'github': addLine('Opening GitHub...', 'output'); window.open('https://github.com', '_blank'); break;
+                case 'resume': addLine('Downloading Resume...', 'output'); window.open('assets/resume/resume.pdf', '_blank'); break;
+                case 'leetcode': addLine('Opening LeetCode profile...', 'output'); window.open('https://leetcode.com', '_blank'); break;
+                case 'contact': addLine('Email: suleman@example.com | Phone: +1234567890', 'output'); break;
+                case 'clear': body.innerHTML = '<div class="line">Terminal cleared.</div>'; break;
+                case 'sudo hire suleman': addLine('Hiring request sent! Please wait for HR to contact you.', 'output'); break;
+                case 'coffee': addLine('☕ Here is your virtual coffee! Fresh and hot.', 'output'); break;
+                case 'jarvis': addLine('JARVIS: At your service, sir. All systems nominal.', 'output'); break;
+                default: addLine(`Command not recognized: ${cmd}. Type 'help' for available commands.`, 'error');
+            }
+            body.scrollTop = body.scrollHeight;
+        }
+        function addLine(text, type = 'output') { const div = document.createElement('div'); div.className = `line ${type}`; div.textContent = text; body.appendChild(div); }
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.style.display = 'none'; } });
+    }
+
+    // 9. ASSISTANT
+    function initAssistant() {
+        const toggleBtn = document.getElementById('ai-toggle');
+        const window = document.getElementById('ai-window');
+        const input = document.getElementById('ai-input');
+        const sendBtn = document.getElementById('ai-send');
+        const messages = document.getElementById('ai-messages');
+        const knowledgeBase = {
+            'who is suleman': 'Shaik Suleman is a skilled Backend Java Developer with expertise in Spring Boot, REST APIs, and clean architecture.',
+            'tell me about his projects': 'Suleman has built several impressive projects including an E-Commerce Platform (Spring Boot), a Banking Management System (Java/JDBC), and a Multi-Client Chat Application (WebSockets).',
+            'open github': 'Opening GitHub...',
+            'show resume': 'Downloading Resume...',
+            'what technologies does he know': 'Suleman is proficient in Java, Spring Boot, MySQL, Git, GitHub, HTML, CSS, JavaScript, Bootstrap, REST APIs, and JDBC.'
+        };
+        let isOpen = false;
+        toggleBtn.addEventListener('click', () => { isOpen = !isOpen; window.style.display = isOpen ? 'flex' : 'none'; if (isOpen) input.focus(); });
+        function addMessage(text, type = 'bot') { const div = document.createElement('div'); div.className = `msg ${type}`; div.textContent = text; messages.appendChild(div); messages.scrollTop = messages.scrollHeight; }
+        function handleQuery() {
+            const query = input.value.trim().toLowerCase(); if (!query) return;
+            addMessage(query, 'user'); input.value = '';
+            let found = false;
+            for (const [key, value] of Object.entries(knowledgeBase)) {
+                if (query.includes(key)) { addMessage(value, 'bot'); if (key === 'open github') window.open('https://github.com', '_blank'); if (key === 'show resume') window.open('assets/resume/resume.pdf', '_blank'); found = true; break; }
+            }
+            if (!found) addMessage("I'm not sure about that. Try asking about: who is suleman, projects, technologies, github, or resume.", 'bot');
+        }
+        sendBtn.addEventListener('click', handleQuery);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleQuery(); });
+    }
+
+    // ==========================================
+    // BOOT THE ENTIRE APP
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        initLoader();
+        initNavbar();
+        initHero();
+        initTyping();
+        initParticles();
+        initScroll();
+        initAnimations();
+        initTerminal();
+        initAssistant();
+    });
+</script>
+</body>
+</html>
